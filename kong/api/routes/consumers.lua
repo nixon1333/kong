@@ -6,6 +6,15 @@ local utils = require "kong.tools.utils"
 local null = ngx.null
 
 
+local function post_process(data)
+  local r_data = utils.deep_copy(data)
+  r_data.config = nil
+  r_data.e = "c"
+  reports.send("api", r_data)
+  return data
+end
+
+
 return {
   ["/consumers"] = {
     GET = function(self, db, helpers, parent)
@@ -19,10 +28,10 @@ return {
           return endpoints.handle_error(err_t)
         end
 
-        return kong.response.exit(200, {
+        return endpoints.ok {
           data = { consumer },
           next = null,
-        })
+        }
       end
 
       return parent()
@@ -31,13 +40,6 @@ return {
 
   ["/consumers/:consumers/plugins"] = {
     POST = function(_, _, _, parent)
-      local post_process = function(data)
-        local r_data = utils.deep_copy(data)
-        r_data.config = nil
-        r_data.e = "c"
-        reports.send("api", r_data)
-        return data
-      end
       return parent(post_process)
     end,
   },

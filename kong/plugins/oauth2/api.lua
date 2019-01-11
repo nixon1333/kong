@@ -1,9 +1,6 @@
 local endpoints = require "kong.api.endpoints"
 
 
-local HTTP_NOT_FOUND = 404
-
-
 local kong = kong
 local credentials_schema = kong.db.oauth2_credentials.schema
 local tokens_schema = kong.db.oauth2_tokens.schema
@@ -56,7 +53,7 @@ return {
           return endpoints.handle_error(err_t)
         end
         if not consumer then
-          return kong.response.exit(HTTP_NOT_FOUND, { message = "Not Found" })
+          return endpoints.not_found()
         end
 
         self.consumer = consumer
@@ -68,7 +65,7 @@ return {
 
         if self.req.cmd_mth ~= "PUT" then
           if not cred or cred.consumer.id ~= consumer.id then
-            return kong.response.exit(HTTP_NOT_FOUND, { message = "Not Found" })
+            return endpoints.not_found()
           end
           self.oauth2_credential = cred
           self.params.oauth2_credentials = cred.id

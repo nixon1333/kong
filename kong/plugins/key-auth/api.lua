@@ -5,9 +5,6 @@ local credentials_schema = kong.db.keyauth_credentials.schema
 local consumers_schema   = kong.db.consumers.schema
 
 
-local HTTP_NOT_FOUND = 404
-
-
 return {
   ["/consumers/:consumers/key-auth"] = {
     schema = credentials_schema,
@@ -28,7 +25,7 @@ return {
           return endpoints.handle_error(err_t)
         end
         if not consumer then
-          return kong.response.exit(HTTP_NOT_FOUND, { message = "Not found" })
+          return endpoints.not_found()
         end
 
         self.consumer = consumer
@@ -40,7 +37,7 @@ return {
 
         if self.req.cmd_mth ~= "PUT" then
           if not cred or cred.consumer.id ~= consumer.id then
-            return kong.response.exit(HTTP_NOT_FOUND, { message = "Not found" })
+            return endpoints.not_found()
           end
           self.keyauth_credential = cred
           self.params.keyauth_credentials = cred.id

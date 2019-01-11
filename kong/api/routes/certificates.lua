@@ -27,7 +27,7 @@ local function get_cert_id_from_sni(self, db, helpers)
     return
   end
 
-  kong.response.exit(404, { message = "SNI not found" })
+  return endpoints.not_found("SNI not found")
 end
 
 
@@ -36,22 +36,8 @@ return {
     before = get_cert_id_from_sni,
 
     -- override to include the snis list when getting an individual certificate
-    GET = function(self, db, helpers)
-      local pk = { id = self.params.certificates }
-
-      local opts = endpoints.extract_options(self.args.uri, db.certificates.schema, "select")
-
-      local cert, _, err_t = db.certificates:select_with_name_list(pk, opts)
-      if err_t then
-        return endpoints.handle_error(err_t)
-      end
-
-      if not cert then
-        kong.response.exit(404, { message = "Not found" })
-      end
-
-      return kong.response.exit(200, cert)
-    end,
+    GET = endpoints.get_entity_endpoint(kong.db.certificates.schema,
+                                        nil, nil, "select_with_name_list"),
 
     -- override to create a new SNI in the PUT /certificates/foo.com (create) case
     PUT = function(self, db, helpers)
@@ -80,10 +66,10 @@ return {
       end
 
       if not cert then
-        kong.response.exit(404, { message = "Not found" })
+        return endpoints.not_found()
       end
 
-      return kong.response.exit(200, cert)
+      return endpoints.ok(cert)
     end,
   },
 
